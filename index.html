@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Voice Ledger - Kirana Shop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .voice-section, .ledger-section {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .microphone {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .microphone:hover {
+            transform: scale(1.05);
+        }
+
+        .microphone.listening {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(102, 126, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+        }
+
+        .mic-icon {
+            font-size: 2.5em;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .start-btn { background: #4CAF50; color: white; }
+        .stop-btn { background: #f44336; color: white; }
+        .clear-btn { background: #FF9800; color: white; }
+        .export-btn { background: #2196F3; color: white; }
+
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+
+        #status {
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        .status-info { background: #cce7ff; color: #004085; }
+        .status-listening { background: #fff3cd; color: #856404; }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .summary-card h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .summary-amount {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .balance-positive { color: #4CAF50; }
+        .balance-negative { color: #f44336; }
+        .amount-positive { color: #4CAF50; font-weight: bold; }
+        .amount-negative { color: #f44336; font-weight: bold; }
+
+        .ledger-table {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+
+        th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+        }
+
+        .entry-income { background: #e8f5e8; }
+        .entry-expense { background: #ffeaea; }
+        .entry-credit { background: #fff3e0; }
+
+        .manual-entry {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .manual-entry input, .manual-entry select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .manual-entry button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .voice-commands {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .voice-commands h3 {
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+
+        .voice-commands ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .voice-commands li {
+            margin: 5px 0;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+            font-size: 0.85em;
+        }
+
+        .customers-section {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .customers-section h3 {
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+
+        .customer-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 4px solid #0056b3;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 200px;
+            }
+
+            th, td {
+                font-size: 0.8em;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏪 Smart Voice Ledger</h1>
+            <p class="subtitle">किराना दुकान के लिए आवाज़ से हिसाब-किताब</p>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>💰 कुल बैलेंस</h3>
+                <div class="summary-amount" id="totalBalance">₹0</div>
+            </div>
+            <div class="summary-card">
+                <h3>📈 कुल आय</h3>
+                <div class="summary-amount amount-positive" id="totalIncome">₹0</div>
+            </div>
+            <div class="summary-card">
+                <h3>📉 कुल खर्च</h3>
+                <div class="summary-amount amount-negative" id="totalExpense">₹0</div>
+            </div>
+            <div class="summary-card">
+                <h3>🔄 उधारी</h3>
+                <div class="summary-amount" id="totalCredit">₹0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="voice-section">
+                <h2 style="text-align: center; margin-bottom: 20px;">🎤 Voice Commands</h2>
+                
+                <div class="microphone" id="micButton" onclick="toggleListening()">
+                    <div class="mic-icon">🎤</div>
+                </div>
+                
+                <div class="controls">
+                    <button class="start-btn" id="startBtn" onclick="startListening()">
+                        🎙️ सुनें
+                    </button>
+                    <button class="stop-btn" id="stopBtn" onclick="stopListening()" disabled>
+                        ⏹️ रोकें
+                    </button>
+                </div>
+                
+                <div id="status" class="status-info">
+                    Voice ledger तैयार है! बोलकर entries add करें।
+                </div>
+                
+                <div class="voice-commands">
+                    <h3>🗣️ Voice Commands:</h3>
+                    <ul>
+                        <li><strong>💰 पैसे मिले:</strong> "राम ने 500 दिये" / "500 जमा राम के"</li>
+                        <li><strong>🛒 सामान बेचा:</strong> "तेल 200 का दिया" / "दूध 50 बेचा"</li>
+                        <li><strong>🔄 उधारी:</strong> "राम के 300 बाकी" / "श्याम को 200 उधार"</li>
+                        <li><strong>📊 बैलेंस:</strong> "balance बताओ" / "हिसाब बताओ"</li>
+                        <li><strong>📋 Entries:</strong> "आज की entries दिखाओ"</li>
+                        <li><strong>🗑️ Clear:</strong> "सब clear करो"</li>
+                        <li><strong>👤 Customer:</strong> "राम का हिसाब बताओ"</li>
+                    </ul>
+                </div>
+
+                <div class="customers-section">
+                    <h3>👥 Customer Balance:</h3>
+                    <div id="customersList">
+                        <div style="text-align: center; color: #666; padding: 20px;">
+                            कोई customer balance नहीं है
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="manual-entry">
+                    <h3>✏️ Manual Entry:</h3>
+                    <select id="entryType">
+                        <option value="income">Income (आय)</option>
+                        <option value="expense">Expense (खर्च)</option>
+                        <option value="credit">Credit/उधारी</option>
+                    </select>
+                    <input type="text" id="customerName" placeholder="Customer Name (ग्राहक का नाम)">
+                    <input type="number" id="amount" placeholder="Amount (रकम)" step="0.01">
+                    <input type="text" id="description" placeholder="Description (विवरण)">
+                    <button class="start-btn" onclick="addManualEntry()">📝 Add Entry</button>
+                </div>
+            </div>
+
+            <div class="ledger-section">
+                <h2 style="margin-bottom: 20px;">📋 Ledger Entries</h2>
+                
+                <div class="controls">
+                    <button class="export-btn" onclick="exportData()">💾 Export</button>
+                    <button class="clear-btn" onclick="clearAllData()">🗑️ Clear All</button>
+                </div>
+                
+                <div class="ledger-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Type</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #666;">
+                                    कोई entries नहीं हैं। Voice command या manual entry से add करें।
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let recognition = null;
+        let isListening = false;
+        let ledgerData = JSON.parse(localStorage.getItem('voiceLedgerData') || '[]');
+        let customers = JSON.parse(localStorage.getItem('customerData') || '{}');
+
+        // Common Indian names for recognition
+        const commonNames = [
+            'राम', 'श्याम', 'गीता', 'सीता', 'मोहन', 'रोहन', 'प्रिया', 'अनिल', 'सुनील', 'विकास', 
+            'राहुल', 'प्रीति', 'सुमित्रा', 'लक्ष्मी', 'अमित', 'सुमन', 'रीता', 'पूजा', 'अजय', 'संजय', 
+            'दीपक', 'मीरा', 'रमेश', 'सुरेश', 'कमल', 'नीता', 'गीता', 'सुनीता', 'मनीष', 'राज'
+        ];
+
+        // Kirana/Grocery items comprehensive list
+        const kiranaItems = [
+            // Oil & Cooking
+            'तेल', 'oil', 'सरसों', 'mustard', 'सूरजमुखी', 'sunflower', 'रिफाइंड', 'घी', 'ghee',
+            
+            // Dairy
+            'दूध', 'milk', 'दही', 'curd', 'योगर्ट', 'yogurt', 'पनीर', 'paneer', 'मक्खन', 'butter', 'cream', 'क्रीम',
+            
+            // Personal Care & Cleaning
+            'साबुन', 'soap', 'सर्फ', 'surf', 'शैम्पू', 'shampoo', 'टूथपेस्ट', 'toothpaste',
+            'फेसवाश', 'facewash', 'लोशन', 'lotion', 'डिटर्जेंट', 'detergent', 'झाड़ू', 'broom',
+            'पोछा', 'mop', 'फिनाइल', 'phenyl', 'हैंडवाश', 'handwash', 'tissue', 'टिश्यू',
+            
+            // Grains & Pulses  
+            'चावल', 'rice', 'गेहूं', 'wheat', 'आटा', 'flour', 'दाल', 'dal', 'चना', 'chana',
+            'मूंग', 'moong', 'मसूर', 'masur', 'तुअर', 'tuar', 'अरहर', 'arhar', 'राजमा', 'rajma',
+            'छोले', 'chole', 'कबुली चना', 'kabuli chana', 'बेसन', 'besan',
+            
+            // Spices & Condiments
+            'नमक', 'salt', 'चीनी', 'sugar', 'हल्दी', 'turmeric', 'धनिया', 'coriander', 'जीरा', 'cumin',
+            'लाल मिर्च', 'red chilli', 'हरी मिर्च', 'green chilli', 'गरम मसाला', 'garam masala',
+            'अजवाइन', 'ajwain', 'हींग', 'hing', 'मेथी', 'methi', 'काली मिर्च', 'black pepper',
+            
+            // Vegetables (common)
+            'प्याज', 'onion', 'आलू', 'potato', 'टमाटर', 'tomato', 'अदरक', 'ginger', 'लहसुन', 'garlic',
+            'भिंडी', 'okra', 'बैंगन', 'brinjal', 'गोभी', 'cauliflower', 'पत्तागोभी', 'cabbage',
+            
+            // Packaged Items
+            'बिस्कुट', 'biscuit', 'चाय', 'tea', 'कॉफी', 'coffee', 'चॉकलेट', 'chocolate', 'नमकीन', 'namkeen',
+            'मैगी', 'maggi', 'नूडल्स', 'noodles', 'ब्रेड', 'bread', 'जैम', 'jam', 'अचार', 'pickle',
+            'केचप', 'ketchup', 'सॉस', 'sauce', 'मसाला', 'masala',
+            
+            // Beverages
+            'पानी', 'water', 'सॉफ्ट ड्रिंक', 'soft drink', 'जूस', 'juice', 'लस्सी', 'lassi', 'फ्रूटी', 'frooti',
+            
+            // Stationery (for journal/variety store)
+            'पेन', 'pen', 'पेंसिल', 'pencil', 'रबर', 'rubber', 'eraser', 'नोटबुक', 'notebook', 'कॉपी', 'copy',
+            'रजिस्टर', 'register', 'कागज', 'paper', 'स्केल', 'scale', 'ruler', 'कैंची', 'scissors',
+            
+            // General terms
+            'सामान', 'saman', 'item', 'चीज', 'cheez', 'राशन', 'ration', 'grocery', 'किराना', 'सामग्री'
+        ];
+
+        // Initialize app
+        window.addEventListener('load', () => {
+            checkBrowserSupport();
+            loadLedgerData();
+            updateSummary();
+            updateCustomersList();
+        });
+
+        // Check browser support with detailed debugging
+        function checkBrowserSupport() {
+            console.log('Checking browser support...');
+            console.log('User Agent:', navigator.userAgent);
+            console.log('webkitSpeechRecognition:', 'webkitSpeechRecognition' in window);
+            console.log('SpeechRecognition:', 'SpeechRecognition' in window);
+            console.log('Location:', window.location.protocol, window.location.hostname);
+            
+            // Check for Web Speech API (NOT getUserMedia)
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                updateStatus('❌ Voice recognition support नहीं है। Chrome browser use करें।', 'error');
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('micButton').style.opacity = '0.5';
+                document.getElementById('micButton').style.cursor = 'not-allowed';
+                
+                // Show detailed error info
+                showDetailedError();
+                return false;
+            }
+            
+            // Check if HTTPS (required for speech recognition in production)
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                updateStatus('⚠️ HTTPS connection required for voice recognition in production.', 'error');
+                return false;
+            }
+            
+            updateStatus('✅ Voice recognition ready! माइक बटन दबाकर बोलें।', 'success');
+            return true;
+        }
+        
+        // Show detailed error information
+        function showDetailedError() {
+            const errorInfo = document.createElement('div');
+            errorInfo.style.cssText = `
+                background: #fff3cd; 
+                border: 1px solid #ffeaa7; 
+                padding: 15px; 
+                margin: 15px 0; 
+                border-radius: 10px;
+                font-size: 0.9em;
+            `;
+            errorInfo.innerHTML = `
+                <h3 style="color: #856404; margin-bottom: 10px;">🔧 Debugging Information:</h3>
+                <p><strong>Browser:</strong> ${navigator.userAgent}</p>
+                <p><strong>Protocol:</strong> ${window.location.protocol}</p>
+                <p><strong>Host:</strong> ${window.location.hostname}</p>
+                <p><strong>webkitSpeechRecognition:</strong> ${'webkitSpeechRecognition' in window ? '✅ Available' : '❌ Not Available'}</p>
+                <p><strong>SpeechRecognition:</strong> ${'SpeechRecognition' in window ? '✅ Available' : '❌ Not Available'}</p>
+                <br>
+                <p><strong>Solutions:</strong></p>
+                <ul>
+                    <li>Chrome browser use करें (recommended)</li>
+                    <li>HTTPS connection use करें (localhost OK है)</li>
+                    <li>Microphone permissions check करें</li>
+                    <li>Browser को update करें</li>
+                </ul>
+            `;
+            
+            document.querySelector('.voice-section').appendChild(errorInfo);
+        }
+
+        // Initialize speech recognition (Web Speech API - NO getUserMedia needed!)
+        function initializeSpeechRecognition() {
+            try {
+                // Use Web Speech API (NOT media devices)
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                
+                if (!SpeechRecognition) {
+                    throw new Error('Speech Recognition not supported');
+                }
+                
+                recognition = new SpeechRecognition();
+                
+                // Configure speech recognition
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'hi-IN';
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    updateMicrophoneState(true);
+                    updateStatus('🎙️ सुन रहा हूँ... बोलिए!', 'listening');
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                };
+
+                recognition.onresult = function(event) {
+                    if (event.results && event.results.length > 0) {
+                        const command = event.results[0][0].transcript;
+                        updateStatus(`आपने कहा: "${command}"`, 'info');
+                        processVoiceCommand(command);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.log('Speech recognition error:', event.error);
+                    let errorMessage = '';
+                    switch(event.error) {
+                        case 'not-allowed':
+                            errorMessage = '❌ Microphone permission denied. Browser settings में allow करें।';
+                            break;
+                        case 'no-speech':
+                            errorMessage = '⚠️ कोई आवाज़ नहीं सुनाई दी। फिर try करें।';
+                            break;
+                        case 'network':
+                            errorMessage = '❌ Network error. Internet connection check करें।';
+                            break;
+                        case 'audio-capture':
+                            errorMessage = '❌ Audio capture failed. Microphone check करें।';
+                            break;
+                        default:
+                            errorMessage = `⚠️ Voice error: ${event.error}. फिर try करें।`;
+                    }
+                    updateStatus(errorMessage, 'error');
+                    stopListening();
+                };
+
+                recognition.onend = function() {
+                    stopListening();
+                };
+                
+            } catch (error) {
+                console.error('Speech recognition initialization failed:', error);
+                updateStatus('❌ Voice recognition initialize नहीं हो सका।', 'error');
+            }
+        }
+
+        // Enhanced voice command processing for Kirana shop
+        function processVoiceCommand(command) {
+            console.log('Processing voice command:', command);
+            
+            // Extract numbers/amounts
+            const amountMatch = command.match(/(\d+(?:\.\d+)?)/);
+            const amount = amountMatch ? parseFloat(amountMatch[1]) : 0;
+            
+            // Extract customer names
+            const customerName = extractCustomerName(command);
+            
+            // Balance inquiry commands
+            if (command.includes('balance') || command.includes('बैलेंस') || command.includes('हिसाब') || command.includes('बताओ')) {
+                if (customerName) {
+                    speakCustomerBalance(customerName);
+                } else {
+                    speakTotalBalance();
+                }
+                return;
+            }
+            
+            // Show entries commands
+            if (command.includes('entries') || command.includes('एंट्रीज') || command.includes('आज') || command.includes('दिखाओ')) {
+                speakTodayEntries();
+                return;
+            }
+            
+            // Clear commands
+            if ((command.includes('clear') || command.includes('साफ') || command.includes('क्लियर')) && 
+                (command.includes('सब') || command.includes('all'))) {
+                clearAllData();
+                speak('सभी entries और customer data clear हो गया');
+                return;
+            }
+
+            // Process transaction commands
+            if (amount > 0) {
+                processTransactionCommand(command, amount, customerName);
+            } else {
+                updateStatus('❌ Amount स्पष्ट नहीं है। जैसे: "राम ने 500 दिये" या "तेल 200 का दिया"', 'error');
+                speak('Amount स्पष्ट नहीं है');
+            }
+        }
+
+        // Extract customer name from command
+        function extractCustomerName(command) {
+            // Look for common patterns with names
+            for (const name of commonNames) {
+                if (command.includes(name.toLowerCase()) || command.includes(name)) {
+                    return name;
+                }
+            }
+            
+            // Pattern matching for "X ने", "X को", "X का", "X के"
+            const namePatterns = [
+                /([a-zA-Z\u0900-\u097F]+)\s*(ने|को|का|के|से)\s/,
+                /([a-zA-Z\u0900-\u097F]+)\s*(दिये|दिया|बाकी|उधार)/,
+            ];
+            
+            for (const pattern of namePatterns) {
+                const match = command.match(pattern);
+                if (match && match[1] && match[1].length > 1) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+
+        // Process different types of transactions
+        function processTransactionCommand(command, amount, customerName) {
+            let type = '';
+            let description = '';
+            
+            // Income patterns - money received
+            if (command.includes('दिये') || command.includes('दिया') || command.includes('दी') ||
+                command.includes('मिले') || command.includes('मिली') || command.includes('जमा') ||
+                command.includes('payment') || command.includes('पेमेंट')) {
+                
+                type = 'income';
+                description = customerName ? `${customerName} से payment` : 'Payment मिली';
+                
+            }
+            // Credit/Udhaar patterns - money owed
+            else if (command.includes('बाकी') || command.includes('उधार') || command.includes('credit') ||
+                     command.includes('देना') || command.includes('बकाया')) {
+                
+                type = 'credit';
+                description = customerName ? `${customerName} को उधार` : 'उधारी';
+                
+            }
+            // Sales/Income patterns - items sold
+            else if (hasKiranaItem(command) || command.includes('बेचा') || command.includes('दिया') ||
+                     command.includes('का') || command.includes('की')) {
+                
+                type = 'income';
+                const item = extractKiranaItem(command);
+                description = customerName ? 
+                    `${customerName} को ${item || 'सामान'} बेचा` : 
+                    `${item || 'सामान'} बेचा`;
+                
+            }
+            // Default to expense if no clear pattern
+            else {
+                type = 'expense';
+                description = customerName ? `${customerName} - खर्च` : 'खर्च';
+            }
+            
+            // Add entry
+            addLedgerEntry(type, amount, description, customerName);
+            
+            // Update customer balance
+            if (customerName) {
+                updateCustomerBalance(customerName, amount, type);
+            }
+            
+            // Provide feedback
+            const typeHindi = type === 'income' ? 'आय' : (type === 'credit' ? 'उधारी' : 'खर्च');
+            const message = `✅ ${amount} रुपए ${typeHindi} - ${description}`;
+            updateStatus(message, 'success');
+            speak(`${amount} रुपए ${typeHindi} add हो गया`);
+        }
+
+        // Check if command contains kirana items
+        function hasKiranaItem(command) {
+            return kiranaItems.some(item => command.includes(item.toLowerCase()));
+        }
+
+        // Extract kirana item from command
+        function extractKiranaItem(command) {
+            for (const item of kiranaItems) {
+                if (command.includes(item.toLowerCase())) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        // Add ledger entry
+        function addLedgerEntry(type, amount, description, customerName = null) {
+            const entry = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('hi-IN'),
+                time: new Date().toLocaleTimeString('hi-IN'),
+                type: type,
+                amount: amount,
+                description: description,
+                customer: customerName
+            };
+            
+            ledgerData.unshift(entry);
+            saveLedgerData();
+            loadLedgerData();
+            updateSummary();
+        }
+
+        // Update customer balance
+        function updateCustomerBalance(customerName, amount, type) {
+            if (!customers[customerName]) {
+                customers[customerName] = { balance: 0, lastTransaction: new Date().toISOString() };
+            }
+            
+            if (type === 'income') {
+                customers[customerName].balance -= amount; // Customer paid, their debt reduces
+            } else if (type === 'credit') {
+                customers[customerName].balance += amount; // Customer owes more
+            } else {
+                customers[customerName].balance += amount; // Customer bought items on credit
+            }
+            
+            customers[customerName].lastTransaction = new Date().toISOString();
+            saveCustomerData();
+            updateCustomersList();
+        }
+
+        // Manual entry
+        function addManualEntry() {
+            const type = document.getElementById('entryType').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+            
+            if (!amount || amount <= 0) {
+                updateStatus('❌ Valid amount enter करें।', 'error');
+                return;
+            }
+            
+            addLedgerEntry(type, amount, description || 'Manual entry', customerName || null);
+            
+            if (customerName) {
+                updateCustomerBalance(customerName, amount, type);
+            }
+            
+            // Clear form
+            document.getElementById('amount').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('customerName').value = '';
+            
+            updateStatus('✅ Manual entry add हो गई।', 'success');
+        }
+
+        // Delete entry
+        function deleteEntry(id) {
+            const entry = ledgerData.find(e => e.id === id);
+            if (entry && entry.customer) {
+                // Reverse the customer balance change
+                if (customers[entry.customer]) {
+                    if (entry.type === 'income') {
+                        customers[entry.customer].balance += entry.amount;
+                    } else {
+                        customers[entry.customer].balance -= entry.amount;
+                    }
+                    saveCustomerData();
+                    updateCustomersList();
+                }
+            }
+            
+            ledgerData = ledgerData.filter(entry => entry.id !== id);
+            saveLedgerData();
+            loadLedgerData();
+            updateSummary();
+            updateStatus('✅ Entry delete हो गई।', 'success');
+        }
+
+        // Load ledger data into table
+        function loadLedgerData() {
+            const tbody = document.getElementById('ledgerBody');
+            
+            if (ledgerData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #666;">
+                            कोई entries नहीं हैं। Voice command या manual entry से add करें।
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = ledgerData.map(entry => `
+                <tr class="entry-${entry.type}">
+                    <td>${entry.date}<br><small>${entry.time}</small></td>
+                    <td>
+                        <span style="padding: 5px 10px; border-radius: 15px; color: white; font-size: 0.8em; 
+                               background: ${entry.type === 'income' ? '#4CAF50' : entry.type === 'credit' ? '#FF9800' : '#f44336'}">
+                            ${entry.type === 'income' ? '📈 आय' : entry.type === 'credit' ? '🔄 उधारी' : '📉 खर्च'}
+                        </span>
+                    </td>
+                    <td>${entry.customer || '-'}</td>
+                    <td class="amount-${entry.type === 'income' ? 'positive' : 'negative'}">
+                        ${entry.type === 'income' ? '+' : entry.type === 'credit' ? '◊' : '-'}₹${entry.amount.toFixed(2)}
+                    </td>
+                    <td>${entry.description}</td>
+                    <td>
+                        <button onclick="deleteEntry(${entry.id})" 
+                                style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8em;">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update summary
+        function updateSummary() {
+            const totalIncome = ledgerData.filter(e => e.type === 'income').reduce((sum, e) => sum + e.amount, 0);
+            const totalExpense = ledgerData.filter(e => e.type === 'expense').reduce((sum, e) => sum + e.amount, 0);
+            const totalCredit = ledgerData.filter(e => e.type === 'credit').reduce((sum, e) => sum + e.amount, 0);
+            const totalBalance = totalIncome - totalExpense;
+            
+            document.getElementById('totalBalance').textContent = `₹${totalBalance.toFixed(2)}`;
+            document.getElementById('totalIncome').textContent = `₹${totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpense').textContent = `₹${totalExpense.toFixed(2)}`;
+            document.getElementById('totalCredit').textContent = `₹${totalCredit.toFixed(2)}`;
+            
+            // Update balance color
+            const balanceEl = document.getElementById('totalBalance');
+            balanceEl.className = `summary-amount ${totalBalance >= 0 ? 'balance-positive' : 'balance-negative'}`;
+        }
+
+        // Update customers list
+        function updateCustomersList() {
+            const customersList = document.getElementById('customersList');
+            
+            if (Object.keys(customers).length === 0) {
+                customersList.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        कोई customer balance नहीं है
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedCustomers = Object.entries(customers)
+                .filter(([name, data]) => Math.abs(data.balance) > 0.01)
+                .sort(([,a], [,b]) => b.balance - a.balance);
+            
+            if (sortedCustomers.length === 0) {
+                customersList.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        सभी customers का balance clear है
+                    </div>
+                `;
+                return;
+            }
+            
+            customersList.innerHTML = sortedCustomers.map(([name, data]) => `
+                <div class="customer-item">
+                    <span><strong>${name}</strong></span>
+                    <span class="${data.balance > 0 ? 'amount-negative' : 'amount-positive'}">
+                        ${data.balance > 0 ? `₹${data.balance.toFixed(2)} बाकी` : `₹${Math.abs(data.balance).toFixed(2)} जमा`}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Speech functions
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'hi-IN';
+                utterance.rate = 0.8;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakTotalBalance() {
+            const totalIncome = ledgerData.filter(e => e.type === 'income').reduce((sum, e) => sum + e.amount, 0);
+            const totalExpense = ledgerData.filter(e => e.type === 'expense').reduce((sum, e) => sum + e.amount, 0);
+            const totalCredit = ledgerData.filter(e => e.type === 'credit').reduce((sum, e) => sum + e.amount, 0);
+            const balance = totalIncome - totalExpense;
+            
+            speak(`आपका कुल बैलेंस है ${balance} रुपए। कुल आय ${totalIncome} रुपए, कुल खर्च ${totalExpense} रुपए, और कुल उधारी ${totalCredit} रुपए।`);
+        }
+
+        function speakCustomerBalance(customerName) {
+            if (customers[customerName]) {
+                const balance = customers[customerName].balance;
+                if (balance > 0) {
+                    speak(`${customerName} के ${balance} रुपए बाकी हैं।`);
+                } else if (balance < 0) {
+                    speak(`${customerName} के ${Math.abs(balance)} रुपए जमा हैं।`);
+                } else {
+                    speak(`${customerName} का balance clear है।`);
+                }
+            } else {
+                speak(`${customerName} का कोई record नहीं मिला।`);
+            }
+        }
+
+        function speakTodayEntries() {
+            const today = new Date().toLocaleDateString('hi-IN');
+            const todayEntries = ledgerData.filter(entry => entry.date === today);
+            
+            if (todayEntries.length === 0) {
+                speak('आज की कोई entries नहीं हैं।');
+                return;
+            }
+            
+            let text = `आज की ${todayEntries.length} entries हैं: `;
+            todayEntries.slice(0, 5).forEach(entry => {
+                const type = entry.type === 'income' ? 'आय' : entry.type === 'credit' ? 'उधारी' : 'खर्च';
+                text += `${entry.amount} रुपए ${type}, ${entry.description}। `;
+            });
+            
+            speak(text);
+        }
+
+        function stopListening() {
+            if (recognition && isListening) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.log('Error stopping recognition:', error);
+                }
+                
+                isListening = false;
+                updateMicrophoneState(false);
+                updateStatus('⏹️ Voice recognition रुक गया।', 'info');
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        function updateMicrophoneState(listening) {
+            const micButton = document.getElementById('micButton');
+            if (listening) {
+                micButton.classList.add('listening');
+            } else {
+                micButton.classList.remove('listening');
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status-${type}`;
+        }
+
+        // Data management
+        function saveLedgerData() {
+            localStorage.setItem('voiceLedgerData', JSON.stringify(ledgerData));
+        }
+
+        function saveCustomerData() {
+            localStorage.setItem('customerData', JSON.stringify(customers));
+        }
+
+        function clearAllData() {
+            if (confirm('क्या आप सभी entries और customer data delete करना चाहते हैं?')) {
+                ledgerData = [];
+                customers = {};
+                saveLedgerData();
+                saveCustomerData();
+                loadLedgerData();
+                updateSummary();
+                updateCustomersList();
+                updateStatus('🗑️ सभी data clear हो गया।', 'info');
+            }
+        }
+
+        function exportData() {
+            const csvContent = [
+                ['Date', 'Time', 'Type', 'Customer', 'Amount', 'Description'].join(','),
+                ...ledgerData.map(entry => [
+                    entry.date,
+                    entry.time,
+                    entry.type,
+                    entry.customer || '',
+                    entry.amount,
+                    `"${entry.description}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `voice-ledger-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            updateStatus('📥 Data export हो गया!', 'success');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space' && !event.target.matches('input, textarea, select')) {
+                event.preventDefault();
+                toggleListening();
+            }
+        });
+    </script>
+</body>
+</html>)
